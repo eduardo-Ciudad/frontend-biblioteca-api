@@ -14,19 +14,19 @@ async function request(path, options = {}) {
 }
  
 // ── LIVROS ──────────────────────────────────────
-export const listarLivros = () => request("/livros");
-export const buscarLivro = (id) => request(`/livros/${id}`);
-export const cadastrarLivro = (dados) => request("/livros", { method: "POST", body: JSON.stringify(dados) });
-export const deletarLivro = (id) => request(`/livros/${id}`, { method: "DELETE" });
+export const listarLivros = () => request("livros");
+export const buscarLivro = (id) => request(`livros/${id}`);
+export const cadastrarLivro = (dados) => request("livros", { method: "POST", body: JSON.stringify(dados) });
+export const deletarLivro = (id) => request(`livros/${id}`, { method: "DELETE" });
  
 // ── USUARIOS ─────────────────────────────────────
-export const listarUsuarios = () => request("/usuarios");
-export const buscarUsuario = (id) => request(`/usuarios/${id}`);
-export const cadastrarUsuario = (dados) => request("/usuarios", { method: "POST", body: JSON.stringify(dados) });
-export const deletarUsuario = (id) => request(`/usuarios/${id}`, { method: "DELETE" });
+export const listarUsuarios = () => request("usuarios");
+export const buscarUsuario = (id) => request(`usuarios/${id}`);
+export const cadastrarUsuario = (dados) => request("usuarios", { method: "POST", body: JSON.stringify(dados) });
+export const deletarUsuario = (id) => request(`usuarios/${id}`, { method: "DELETE" });
  
 // ── EMPRESTIMOS ───────────────────────────────────
-export const listarEmprestimos = () => request("/emprestimos");
-export const criarEmprestimo = (dados) => request("/emprestimos", { method: "POST", body: JSON.stringify(dados) });
-export const devolverLivro = (id) => request(`/emprestimos/${id}/devolucao`, { method: "PUT" });
-export const deletarEmprestimo = (id) => request(`/emprestimos/${id}`, { method: "DELETE" });
+export const listarEmprestimos = () => request("emprestimos");
+export const criarEmprestimo = (dados) => request("emprestimos", { method: "POST", body: JSON.stringify(dados) });
+export const devolverLivro = (id) => request(`emprestimos/${id}/devolucao`, { method: "PUT" });
+export const deletarEmprestimo = (id) => request(`emprestimos/${id}`, { method: "DELETE" });

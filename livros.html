@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca — Livros</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <h1>Biblioteca</h1>
+    <span>Sistema de Gestão</span>
+  </div>
+  <div class="nav-section">
+    <p class="nav-label">Menu</p>
+    <a href="index.html" class="nav-link">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="livros.html" class="nav-link">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Livros</span>
+    </a>
+    <a href="usuarios.html" class="nav-link">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Usuários</span>
+    </a>
+    <a href="emprestimos.html" class="nav-link">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      <span>Empréstimos</span>
+    </a>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="page-header fade-in">
+    <p class="breadcrumb">Acervo</p>
+    <h2>Livros</h2>
+    <p>Gerencie o catálogo da biblioteca</p>
+  </div>
+  <div class="content fade-in">
+    <div class="stats-row" style="grid-template-columns:1fr 1fr;max-width:480px;margin-bottom:32px">
+      <div class="stat-card"><p class="stat-label">Total</p><p class="stat-value" id="count-livros">—</p></div>
+      <div class="stat-card"><p class="stat-label">Disponíveis</p><p class="stat-value" id="count-disponiveis">—</p></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h3>Catálogo</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Título</th><th>Autor</th><th>Status</th><th></th></tr></thead>
+            <tbody id="livros-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>Cadastrar Livro</h3></div>
+        <div class="card-body">
+          <form id="form-livro" class="form-grid">
+            <div class="field">
+              <label for="titulo">Título</label>
+              <input id="titulo" type="text" placeholder="Ex: Dom Casmurro" required>
+            </div>
+            <div class="field">
+              <label for="autor">Autor</label>
+              <input id="autor" type="text" placeholder="Ex: Machado de Assis" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Cadastrar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast-container"></div>
+<script type="module" src="js/livros.js"></script>
+</body>
+</html>

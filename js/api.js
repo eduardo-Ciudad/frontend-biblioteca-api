@@ -1,4 +1,4 @@
-const API_URL = "https://biblioteca-api-nqwi.onrender.com/";
+const API_URL = "https://biblioteca-api-nqwi.onrender.com";
  
 async function request(path, options = {}) {
   const res = await fetch(`${API_URL}${path}`, {

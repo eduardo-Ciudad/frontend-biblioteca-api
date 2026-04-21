@@ -1,11 +1,11 @@
 import { listarLivros, cadastrarLivro, deletarLivro } from "./api.js";
-import { toast, setActiveNav } from "./utils.js";
+import { toast, initPage } from "./utils.js";
 
-setActiveNav();
+initPage();
 
-const tbody = document.getElementById("livros-tbody");
-const form = document.getElementById("form-livro");
-const countEl = document.getElementById("count-livros");
+const tbody    = document.getElementById("livros-tbody");
+const form     = document.getElementById("form-livro");
+const countEl  = document.getElementById("count-livros");
 const countDisp = document.getElementById("count-disponiveis");
 
 async function carregar() {
@@ -27,9 +27,7 @@ function renderTabela(livros) {
   }
   tbody.innerHTML = livros.map(l => `
     <tr>
-      <td>
-        <strong>${l.titulo}</strong>
-      </td>
+      <td><strong>${l.titulo}</strong></td>
       <td>${l.autor}</td>
       <td>
         <span class="badge ${l.disponivel ? "badge-available" : "badge-borrowed"}">
@@ -64,8 +62,8 @@ form.addEventListener("submit", async (e) => {
   btn.textContent = "Salvando…";
   try {
     await cadastrarLivro({
-      titulo: document.getElementById("titulo").value.trim(),
-      autor: document.getElementById("autor").value.trim(),
+      titulo:     document.getElementById("titulo").value.trim(),
+      autor:      document.getElementById("autor").value.trim(),
       disponivel: true,
     });
     toast("Livro cadastrado com sucesso");

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca — Acesso</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-body">
+
+  <div class="auth-bg">
+    <div class="auth-bg-glow"></div>
+  </div>
+
+  <div class="auth-container fade-in">
+    <div class="auth-card">
+
+      <div class="auth-header">
+        <h1 class="auth-logo">Biblioteca</h1>
+        <span class="auth-logo-sub">Sistema de Gestão</span>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="panel-login">
+        <p class="auth-title">Entrar na conta</p>
+
+        <div id="login-error" class="auth-alert" style="display:none"></div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="login-senha">Senha</label>
+            <div class="input-password-wrap">
+              <input id="login-senha" type="password" placeholder="••••••••" autocomplete="current-password" required>
+              <button type="button" class="btn-toggle-password" data-target="login-senha" aria-label="Mostrar senha">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button id="btn-login" class="btn btn-primary btn-full">
+            <span class="btn-label">Entrar</span>
+            <span class="btn-spinner" style="display:none">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            </span>
+          </button>
+        </div>
+
+        <p class="auth-switch">Não tem conta? <a href="#" id="goto-register">Criar conta</a></p>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="panel-register" style="display:none">
+        <p class="auth-title">Criar conta</p>
+
+        <div id="register-error" class="auth-alert" style="display:none"></div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="reg-nome">Nome completo</label>
+            <input id="reg-nome" type="text" placeholder="João Silva" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="reg-email">Email</label>
+            <input id="reg-email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="reg-senha">Senha</label>
+            <div class="input-password-wrap">
+              <input id="reg-senha" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required minlength="6">
+              <button type="button" class="btn-toggle-password" data-target="reg-senha" aria-label="Mostrar senha">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="reg-senha2">Confirmar senha</label>
+            <div class="input-password-wrap">
+              <input id="reg-senha2" type="password" placeholder="Repita a senha" autocomplete="new-password" required>
+              <button type="button" class="btn-toggle-password" data-target="reg-senha2" aria-label="Mostrar senha">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button id="btn-register" class="btn btn-primary btn-full">
+            <span class="btn-label">Criar conta</span>
+            <span class="btn-spinner" style="display:none">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            </span>
+          </button>
+        </div>
+
+        <p class="auth-switch">Já tem conta? <a href="#" id="goto-login">Entrar</a></p>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { login, register } from "./js/auth.js";
+    import { toast } from "./js/utils.js";
+
+    // Se já está logado, redireciona
+    if (localStorage.getItem("token")) {
+      window.location.href = "index.html";
+    }
+
+    const panelLogin = document.getElementById("panel-login");
+    const panelRegister = document.getElementById("panel-register");
+
+    // Toggle entre login e cadastro
+    document.getElementById("goto-register").addEventListener("click", (e) => {
+      e.preventDefault();
+      panelLogin.style.display = "none";
+      panelRegister.style.display = "";
+    });
+
+    document.getElementById("goto-login").addEventListener("click", (e) => {
+      e.preventDefault();
+      panelRegister.style.display = "none";
+      panelLogin.style.display = "";
+    });
+
+    // Mostrar/esconder senha
+    document.querySelectorAll(".btn-toggle-password").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const input = document.getElementById(btn.dataset.target);
+        input.type = input.type === "password" ? "text" : "password";
+      });
+    });
+
+    // LOGIN
+    document.getElementById("btn-login").addEventListener("click", async () => {
+      const email = document.getElementById("login-email").value.trim();
+      const senha = document.getElementById("login-senha").value;
+      const errEl = document.getElementById("login-error");
+      errEl.style.display = "none";
+
+      if (!email || !senha) {
+        errEl.textContent = "Preencha email e senha.";
+        errEl.style.display = "block";
+        return;
+      }
+
+      setLoading("btn-login", true);
+      try {
+        await login(email, senha);
+        window.location.href = "index.html";
+      } catch (e) {
+        errEl.textContent = e.message || "Credenciais inválidas.";
+        errEl.style.display = "block";
+      } finally {
+        setLoading("btn-login", false);
+      }
+    });
+
+    // Enter no form de login
+    document.getElementById("login-senha").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("btn-login").click();
+    });
+
+    // REGISTER
+    document.getElementById("btn-register").addEventListener("click", async () => {
+      const nome = document.getElementById("reg-nome").value.trim();
+      const email = document.getElementById("reg-email").value.trim();
+      const senha = document.getElementById("reg-senha").value;
+      const senha2 = document.getElementById("reg-senha2").value;
+      const errEl = document.getElementById("register-error");
+      errEl.style.display = "none";
+
+      if (!nome || !email || !senha) {
+        errEl.textContent = "Preencha todos os campos.";
+        errEl.style.display = "block";
+        return;
+      }
+      if (senha.length < 6) {
+        errEl.textContent = "Senha deve ter mínimo 6 caracteres.";
+        errEl.style.display = "block";
+        return;
+      }
+      if (senha !== senha2) {
+        errEl.textContent = "As senhas não coincidem.";
+        errEl.style.display = "block";
+        return;
+      }
+
+      setLoading("btn-register", true);
+      try {
+        await register(nome, email, senha);
+        toast("Conta criada! Faça login.");
+        // Volta pro painel de login após cadastro
+        setTimeout(() => {
+          panelRegister.style.display = "none";
+          panelLogin.style.display = "";
+          document.getElementById("login-email").value = email;
+        }, 1000);
+      } catch (e) {
+        errEl.textContent = e.message || "Erro ao criar conta.";
+        errEl.style.display = "block";
+      } finally {
+        setLoading("btn-register", false);
+      }
+    });
+
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.querySelector(".btn-label").style.display = loading ? "none" : "";
+      btn.querySelector(".btn-spinner").style.display = loading ? "inline-flex" : "none";
+      if (loading) {
+        btn.querySelector(".btn-spinner svg").style.animation = "spin 0.7s linear infinite";
+      }
+    }
+  </script>
+</body>
+</html>

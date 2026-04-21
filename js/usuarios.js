@@ -1,10 +1,10 @@
 import { listarUsuarios, cadastrarUsuario, deletarUsuario } from "./api.js";
-import { toast, setActiveNav } from "./utils.js";
+import { toast, initPage } from "./utils.js";
 
-setActiveNav();
+initPage();
 
-const tbody = document.getElementById("usuarios-tbody");
-const form = document.getElementById("form-usuario");
+const tbody   = document.getElementById("usuarios-tbody");
+const form    = document.getElementById("form-usuario");
 const countEl = document.getElementById("count-usuarios");
 
 async function carregar() {
@@ -54,7 +54,7 @@ form.addEventListener("submit", async (e) => {
   btn.textContent = "Salvando…";
   try {
     await cadastrarUsuario({
-      nome: document.getElementById("nome").value.trim(),
+      nome:  document.getElementById("nome").value.trim(),
       email: document.getElementById("email").value.trim(),
     });
     toast("Usuário cadastrado com sucesso");

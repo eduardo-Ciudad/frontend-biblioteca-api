@@ -1,14 +1,14 @@
 import { listarEmprestimos, criarEmprestimo, devolverLivro, deletarEmprestimo, listarLivros, listarUsuarios } from "./api.js";
-import { toast, setActiveNav, fmtDate } from "./utils.js";
+import { toast, initPage, fmtDate } from "./utils.js";
 
-setActiveNav();
+initPage(); // guard de autenticação + nav ativa + botão logout
 
-const tbody = document.getElementById("emprestimos-tbody");
-const form = document.getElementById("form-emprestimo");
-const selectLivro = document.getElementById("livroId");
+const tbody         = document.getElementById("emprestimos-tbody");
+const form          = document.getElementById("form-emprestimo");
+const selectLivro   = document.getElementById("livroId");
 const selectUsuario = document.getElementById("usuarioId");
-const countEl = document.getElementById("count-emprestimos");
-const countAtivos = document.getElementById("count-ativos");
+const countEl       = document.getElementById("count-emprestimos");
+const countAtivos   = document.getElementById("count-ativos");
 
 async function carregarSelects() {
   const [livros, usuarios] = await Promise.all([listarLivros(), listarUsuarios()]);
@@ -89,7 +89,7 @@ form.addEventListener("submit", async (e) => {
   try {
     await criarEmprestimo({
       usuarioId: Number(selectUsuario.value),
-      livroId: Number(selectLivro.value),
+      livroId:   Number(selectLivro.value),
     });
     toast("Empréstimo registrado");
     form.reset();

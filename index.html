@@ -66,10 +66,14 @@
 
 <script type="module">
 import { listarLivros, listarUsuarios, listarEmprestimos } from "./js/api.js";
-import { fmtDate } from "./js/utils.js";
+import { fmtDate, initPage } from "./js/utils.js";
+
+initPage(); // guard + nav ativa + botão logout
 
 async function load() {
-  const [livros, usuarios, emprestimos] = await Promise.all([listarLivros(), listarUsuarios(), listarEmprestimos()]);
+  const [livros, usuarios, emprestimos] = await Promise.all([
+    listarLivros(), listarUsuarios(), listarEmprestimos()
+  ]);
   document.getElementById("s-livros").textContent = livros.length;
   document.getElementById("s-usuarios").textContent = usuarios.length;
   document.getElementById("s-emp").textContent = emprestimos.filter(e => e.ativo).length;

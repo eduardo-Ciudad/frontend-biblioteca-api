@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
- 
+
 <nav class="sidebar">
   <div class="sidebar-logo">
     <h1>Biblioteca</h1>
@@ -33,22 +33,45 @@
     </a>
   </div>
 </nav>
- 
+
 <main class="main">
   <div class="page-header fade-in">
     <p class="breadcrumb">Circulação</p>
     <h2>Empréstimos</h2>
-    <p>Controle de retiradas e devoluções</p>
+    <p id="page-subtitle">Controle de retiradas e devoluções</p>
   </div>
-  <div class="content fade-in">
+  <div class="content fade-in" id="main-content"></div>
+</main>
+
+<div id="toast-container"></div>
+<script type="module">
+import { listarEmprestimos, criarEmprestimo, devolverLivro, deletarEmprestimo, listarLivros, listarUsuarios } from "./api.js";
+import { toast, initPage, isAdmin, fmtDate } from "./utils.js";
+
+initPage();
+
+const content = document.getElementById("main-content");
+const admin = isAdmin();
+
+if (admin) {
+  renderAdmin();
+} else {
+  renderUser();
+}
+
+// ─── ADMIN VIEW: histórico completo + gestão + novo empréstimo ──────────
+function renderAdmin() {
+  content.innerHTML = `
     <div class="stats-row" style="grid-template-columns:1fr 1fr;max-width:480px;margin-bottom:32px">
       <div class="stat-card"><p class="stat-label">Total</p><p class="stat-value" id="count-emprestimos">—</p></div>
       <div class="stat-card"><p class="stat-label">Em andamento</p><p class="stat-value" id="count-ativos">—</p></div>
     </div>
- 
     <div class="two-col">
       <div class="card">
-        <div class="card-header"><h3>Histórico de empréstimos</h3></div>
+        <div class="card-header">
+          <h3>Histórico de empréstimos</h3>
+          <span class="role-badge role-badge--admin">Admin</span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Livro</th><th>Usuário</th><th>Data</th><th>Status</th><th></th></tr></thead>
@@ -56,32 +79,202 @@
           </table>
         </div>
       </div>
- 
       <div class="card">
         <div class="card-header"><h3>Novo Empréstimo</h3></div>
         <div class="card-body">
-          <form id="form-emprestimo" class="form-grid">
+          <div class="form-grid">
             <div class="field">
               <label for="livroId">Livro disponível</label>
-              <select id="livroId" required>
-                <option value="">Carregando…</option>
-              </select>
+              <select id="livroId"><option value="">Carregando…</option></select>
             </div>
             <div class="field">
               <label for="usuarioId">Usuário</label>
-              <select id="usuarioId" required>
-                <option value="">Carregando…</option>
-              </select>
+              <select id="usuarioId"><option value="">Carregando…</option></select>
             </div>
-            <button type="submit" class="btn btn-primary">Registrar Empréstimo</button>
-          </form>
+            <button id="btn-emprestar" class="btn btn-primary">Registrar Empréstimo</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</main>
- 
-<div id="toast-container"></div>
-<script type="module" src="js/emprestimos.js"></script>
+  `;
+  loadSelects();
+  loadHistorico();
+  document.getElementById("btn-emprestar").addEventListener("click", submitEmprestimo);
+}
+
+async function loadSelects() {
+  const [livros, usuarios] = await Promise.all([listarLivros(), listarUsuarios()]);
+  const disponiveis = livros.filter(l => l.disponivel);
+  document.getElementById("livroId").innerHTML =
+    `<option value="">Selecionar livro…</option>` +
+    disponiveis.map(l => `<option value="${l.id}">${l.titulo}</option>`).join("");
+  document.getElementById("usuarioId").innerHTML =
+    `<option value="">Selecionar usuário…</option>` +
+    usuarios.map(u => `<option value="${u.id}">${u.nome}</option>`).join("");
+}
+
+async function loadHistorico() {
+  const tbody = document.getElementById("emprestimos-tbody");
+  tbody.innerHTML = `<tr><td colspan="5"><div class="skeleton" style="width:70%"></div></td></tr>`;
+  try {
+    const emp = await listarEmprestimos();
+    document.getElementById("count-emprestimos").textContent = emp.length;
+    document.getElementById("count-ativos").textContent = emp.filter(e => e.ativo).length;
+    if (!emp.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🔄</div><p>Nenhum empréstimo registrado</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = emp.map(e => `
+      <tr>
+        <td><strong>${e.tituloLivro ?? "—"}</strong></td>
+        <td>${e.nomeUsuario ?? "—"}</td>
+        <td>${fmtDate(e.dataEmprestimo)}</td>
+        <td><span class="badge ${e.ativo ? "badge-active" : "badge-available"}"><span class="badge-dot"></span>${e.ativo ? "Em andamento" : "Devolvido"}</span></td>
+        <td style="display:flex;gap:8px">
+          ${e.ativo ? `<button class="btn btn-ghost btn-sm btn-devolver" data-id="${e.id}">Devolver</button>` : ""}
+          <button class="btn btn-danger btn-sm btn-delete" data-id="${e.id}">Remover</button>
+        </td>
+      </tr>
+    `).join("");
+    document.querySelectorAll(".btn-devolver").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try { await devolverLivro(btn.dataset.id); toast("Devolução registrada"); loadHistorico(); loadSelects(); }
+        catch (e) { toast(e.message, "error"); }
+      });
+    });
+    document.querySelectorAll(".btn-delete").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Remover este empréstimo?")) return;
+        try { await deletarEmprestimo(btn.dataset.id); toast("Empréstimo removido"); loadHistorico(); }
+        catch (e) { toast(e.message, "error"); }
+      });
+    });
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠</div><p>Erro ao carregar empréstimos</p></div></td></tr>`;
+  }
+}
+
+async function submitEmprestimo() {
+  const btn = document.getElementById("btn-emprestar");
+  const livroId = document.getElementById("livroId").value;
+  const usuarioId = document.getElementById("usuarioId").value;
+  if (!livroId || !usuarioId) { toast("Selecione livro e usuário.", "error"); return; }
+  btn.disabled = true; btn.textContent = "Registrando…";
+  try {
+    await criarEmprestimo({ usuarioId: Number(usuarioId), livroId: Number(livroId) });
+    toast("Empréstimo registrado");
+    loadHistorico(); loadSelects();
+  } catch (e) { toast(e.message, "error"); }
+  finally { btn.disabled = false; btn.textContent = "Registrar Empréstimo"; }
+}
+
+// ─── USER VIEW: foco em realizar empréstimo + meus empréstimos ──────────
+function renderUser() {
+  document.getElementById("page-subtitle").textContent = "Retire e acompanhe seus livros";
+  content.innerHTML = `
+    <div class="user-emp-layout">
+
+      <!-- Card: Realizar empréstimo -->
+      <div class="card user-emp-form-card">
+        <div class="card-header">
+          <h3>Retirar um livro</h3>
+        </div>
+        <div class="card-body">
+          <p class="user-emp-hint">Escolha um livro disponível para retirar.</p>
+          <div class="form-grid" style="margin-top:20px">
+            <div class="field">
+              <label for="livroId">Livro disponível</label>
+              <select id="livroId"><option value="">Carregando…</option></select>
+            </div>
+            <div class="field">
+              <label for="usuarioId">Registrar para</label>
+              <select id="usuarioId"><option value="">Carregando…</option></select>
+            </div>
+            <button id="btn-emprestar" class="btn btn-primary btn-full">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+              Confirmar Retirada
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Empréstimos ativos -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Empréstimos ativos</h3>
+          <span id="user-count-ativos" class="disp-pill">—</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Livro</th><th>Retirada</th><th>Status</th></tr></thead>
+            <tbody id="user-emp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  `;
+  loadUserSelects();
+  loadUserEmprestimos();
+  document.getElementById("btn-emprestar").addEventListener("click", submitUserEmprestimo);
+}
+
+async function loadUserSelects() {
+  const [livros, usuarios] = await Promise.all([listarLivros(), listarUsuarios()]);
+  const disponiveis = livros.filter(l => l.disponivel);
+  document.getElementById("livroId").innerHTML =
+    `<option value="">Selecione um livro…</option>` +
+    disponiveis.map(l => `<option value="${l.id}">${l.titulo} — ${l.autor}</option>`).join("");
+  document.getElementById("usuarioId").innerHTML =
+    `<option value="">Selecione o usuário…</option>` +
+    usuarios.map(u => `<option value="${u.id}">${u.nome}</option>`).join("");
+}
+
+async function loadUserEmprestimos() {
+  const tbody = document.getElementById("user-emp-tbody");
+  tbody.innerHTML = `<tr><td colspan="3"><div class="skeleton" style="width:60%"></div></td></tr>`;
+  try {
+    const emp = await listarEmprestimos();
+    const ativos = emp.filter(e => e.ativo);
+    document.getElementById("user-count-ativos").textContent =
+      `${ativos.length} ativo${ativos.length !== 1 ? "s" : ""}`;
+    if (!ativos.length) {
+      tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">📖</div><p>Nenhum empréstimo ativo no momento</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = ativos.map(e => `
+      <tr>
+        <td>
+          <strong>${e.tituloLivro ?? "—"}</strong>
+          <div class="subtitle">${e.nomeUsuario ?? ""}</div>
+        </td>
+        <td>${fmtDate(e.dataEmprestimo)}</td>
+        <td><span class="badge badge-active"><span class="badge-dot"></span>Em andamento</span></td>
+      </tr>
+    `).join("");
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⚠</div><p>Erro ao carregar</p></div></td></tr>`;
+  }
+}
+
+async function submitUserEmprestimo() {
+  const btn = document.getElementById("btn-emprestar");
+  const livroId = document.getElementById("livroId").value;
+  const usuarioId = document.getElementById("usuarioId").value;
+  if (!livroId || !usuarioId) { toast("Selecione livro e usuário.", "error"); return; }
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin .7s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Confirmando…`;
+  try {
+    await criarEmprestimo({ usuarioId: Number(usuarioId), livroId: Number(livroId) });
+    toast("Retirada confirmada! Boas leituras.");
+    loadUserSelects();
+    loadUserEmprestimos();
+  } catch (e) { toast(e.message, "error"); }
+  finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg> Confirmar Retirada`;
+  }
+}
+</script>
 </body>
 </html>

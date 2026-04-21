@@ -1,7 +1,6 @@
 const API_URL = "http://localhost:8080";
 
 // ── LOGIN ─────────────────────────────────────────
-// Chama POST /auth/login e salva o token no localStorage
 export async function login(email, senha) {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
@@ -15,16 +14,12 @@ export async function login(email, senha) {
   }
 
   const data = await res.json();
-  // O backend retorna { token: "..." } via LoginResponse
   const token = data.token ?? data;
   localStorage.setItem("token", token);
   return token;
 }
 
 // ── REGISTER ──────────────────────────────────────
-// Chama POST /usuarios para criar a conta
-// Nota: o endpoint /usuarios exige que o backend tenha liberado
-// essa rota sem autenticação no SecurityConfig (permitAll para POST /usuarios)
 export async function register(nome, email, senha) {
   const res = await fetch(`${API_URL}/usuarios`, {
     method: "POST",
@@ -51,11 +46,38 @@ export function getToken() {
   return localStorage.getItem("token");
 }
 
-// ── GUARD ─────────────────────────────────────────
-// Chame no início de cada página protegida
-export function requireAuth() {
+// ── PARSE JWT PAYLOAD ─────────────────────────────
+function parsePayload() {
   const token = getToken();
-  if (!token) {
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch {
+    return null;
+  }
+}
+
+// ── GET EMAIL ─────────────────────────────────────
+export function getEmail() {
+  const p = parsePayload();
+  return p?.sub ?? p?.email ?? "Usuário";
+}
+
+// ── GET ROLE ──────────────────────────────────────
+// Retorna "ADMIN" ou "USER"
+export function getRole() {
+  const p = parsePayload();
+  return p?.role ?? "USER";
+}
+
+// ── IS ADMIN ──────────────────────────────────────
+export function isAdmin() {
+  return getRole() === "ADMIN";
+}
+
+// ── REQUIRE AUTH ──────────────────────────────────
+export function requireAuth() {
+  if (!getToken()) {
     window.location.href = "login.html";
     return false;
   }

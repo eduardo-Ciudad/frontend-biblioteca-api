@@ -38,17 +38,48 @@
   <div class="page-header fade-in">
     <p class="breadcrumb">Acervo</p>
     <h2>Livros</h2>
-    <p>Gerencie o catálogo da biblioteca</p>
+    <p id="page-subtitle">Gerencie o catálogo da biblioteca</p>
   </div>
-  <div class="content fade-in">
+  <div class="content fade-in" id="main-content">
+    <!-- Renderizado via JS dependendo do role -->
+  </div>
+</main>
+
+<div id="toast-container"></div>
+<script type="module">
+import { listarLivros, cadastrarLivro, deletarLivro } from "./api.js";
+import { toast, initPage, isAdmin, fmtDate } from "./utils.js";
+
+initPage();
+
+const content = document.getElementById("main-content");
+const subtitle = document.getElementById("page-subtitle");
+const admin = isAdmin();
+
+// ── ADMIN: layout duas colunas com cadastro + remoção ─────────────────
+// ── USER:  layout full-width, catálogo visual, sem ações destrutivas ──
+
+if (admin) {
+  subtitle.textContent = "Gerencie o catálogo da biblioteca";
+  renderAdmin();
+} else {
+  subtitle.textContent = "Acervo disponível para empréstimo";
+  renderUser();
+}
+
+// ─── ADMIN VIEW ────────────────────────────────────────────────────────
+function renderAdmin() {
+  content.innerHTML = `
     <div class="stats-row" style="grid-template-columns:1fr 1fr;max-width:480px;margin-bottom:32px">
       <div class="stat-card"><p class="stat-label">Total</p><p class="stat-value" id="count-livros">—</p></div>
       <div class="stat-card"><p class="stat-label">Disponíveis</p><p class="stat-value" id="count-disponiveis">—</p></div>
     </div>
-
     <div class="two-col">
       <div class="card">
-        <div class="card-header"><h3>Catálogo</h3></div>
+        <div class="card-header">
+          <h3>Catálogo</h3>
+          <span class="role-badge role-badge--admin">Admin</span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Título</th><th>Autor</th><th>Status</th><th></th></tr></thead>
@@ -56,11 +87,10 @@
           </table>
         </div>
       </div>
-
       <div class="card">
         <div class="card-header"><h3>Cadastrar Livro</h3></div>
         <div class="card-body">
-          <form id="form-livro" class="form-grid">
+          <div class="form-grid" id="form-livro">
             <div class="field">
               <label for="titulo">Título</label>
               <input id="titulo" type="text" placeholder="Ex: Dom Casmurro" required>
@@ -69,15 +99,138 @@
               <label for="autor">Autor</label>
               <input id="autor" type="text" placeholder="Ex: Machado de Assis" required>
             </div>
-            <button type="submit" class="btn btn-primary">Cadastrar</button>
-          </form>
+            <button id="btn-cadastrar" class="btn btn-primary">Cadastrar</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</main>
+  `;
+  loadAdmin();
+  document.getElementById("btn-cadastrar").addEventListener("click", submitCadastro);
+}
 
-<div id="toast-container"></div>
-<script type="module" src="js/livros.js"></script>
+async function loadAdmin() {
+  const tbody = document.getElementById("livros-tbody");
+  tbody.innerHTML = `<tr><td colspan="4"><div class="skeleton" style="width:60%"></div></td></tr>`;
+  try {
+    const livros = await listarLivros();
+    document.getElementById("count-livros").textContent = livros.length;
+    document.getElementById("count-disponiveis").textContent = livros.filter(l => l.disponivel).length;
+    if (!livros.length) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📚</div><p>Nenhum livro cadastrado ainda</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = livros.map(l => `
+      <tr>
+        <td><strong>${l.titulo}</strong></td>
+        <td>${l.autor}</td>
+        <td><span class="badge ${l.disponivel ? "badge-available" : "badge-borrowed"}"><span class="badge-dot"></span>${l.disponivel ? "Disponível" : "Emprestado"}</span></td>
+        <td><button class="btn btn-danger btn-sm btn-delete" data-id="${l.id}">Remover</button></td>
+      </tr>
+    `).join("");
+    document.querySelectorAll(".btn-delete").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Remover este livro?")) return;
+        try { await deletarLivro(btn.dataset.id); toast("Livro removido"); loadAdmin(); }
+        catch (e) { toast(e.message, "error"); }
+      });
+    });
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⚠</div><p>Erro ao carregar livros</p></div></td></tr>`;
+  }
+}
+
+async function submitCadastro() {
+  const btn = document.getElementById("btn-cadastrar");
+  const titulo = document.getElementById("titulo").value.trim();
+  const autor = document.getElementById("autor").value.trim();
+  if (!titulo || !autor) { toast("Preencha título e autor.", "error"); return; }
+  btn.disabled = true; btn.textContent = "Salvando…";
+  try {
+    await cadastrarLivro({ titulo, autor, disponivel: true });
+    toast("Livro cadastrado com sucesso");
+    document.getElementById("titulo").value = "";
+    document.getElementById("autor").value = "";
+    loadAdmin();
+  } catch (e) { toast(e.message, "error"); }
+  finally { btn.disabled = false; btn.textContent = "Cadastrar"; }
+}
+
+// ─── USER VIEW ─────────────────────────────────────────────────────────
+function renderUser() {
+  content.innerHTML = `
+    <div class="user-livros-header">
+      <div class="user-livros-search-wrap">
+        <svg class="search-icon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search-input" class="user-search" type="text" placeholder="Buscar por título ou autor…">
+      </div>
+      <div class="user-livros-stats">
+        <span id="disp-count" class="disp-pill">— disponíveis</span>
+      </div>
+    </div>
+    <div id="livros-grid" class="livros-grid"></div>
+  `;
+  loadUser();
+  document.getElementById("search-input").addEventListener("input", (e) => {
+    filterGrid(e.target.value.toLowerCase());
+  });
+}
+
+let allLivros = [];
+
+async function loadUser() {
+  const grid = document.getElementById("livros-grid");
+  grid.innerHTML = `
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  `;
+  try {
+    allLivros = await listarLivros();
+    const disp = allLivros.filter(l => l.disponivel).length;
+    document.getElementById("disp-count").textContent = `${disp} disponíve${disp === 1 ? "l" : "is"}`;
+    renderGrid(allLivros);
+  } catch {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠</div><p>Erro ao carregar livros</p></div>`;
+  }
+}
+
+function filterGrid(q) {
+  if (!q) { renderGrid(allLivros); return; }
+  renderGrid(allLivros.filter(l =>
+    l.titulo.toLowerCase().includes(q) || l.autor.toLowerCase().includes(q)
+  ));
+}
+
+function renderGrid(livros) {
+  const grid = document.getElementById("livros-grid");
+  if (!livros.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📚</div><p>Nenhum livro encontrado</p></div>`;
+    return;
+  }
+  grid.innerHTML = livros.map((l, i) => `
+    <div class="livro-card ${l.disponivel ? "" : "livro-card--indisponivel"}" style="animation-delay:${i * 40}ms">
+      <div class="livro-card-spine"></div>
+      <div class="livro-card-body">
+        <p class="livro-card-autor">${l.autor}</p>
+        <h3 class="livro-card-titulo">${l.titulo}</h3>
+      </div>
+      <div class="livro-card-footer">
+        <span class="badge ${l.disponivel ? "badge-available" : "badge-borrowed"}">
+          <span class="badge-dot"></span>
+          ${l.disponivel ? "Disponível" : "Emprestado"}
+        </span>
+        ${l.disponivel
+          ? `<a href="emprestimos.html" class="btn btn-primary btn-sm livro-btn-emprestar">Emprestar</a>`
+          : `<span class="livro-indisponivel-hint">Indisponível</span>`
+        }
+      </div>
+    </div>
+  `).join("");
+}
+</script>
 </body>
 </html>

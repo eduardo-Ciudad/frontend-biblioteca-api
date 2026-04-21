@@ -127,33 +127,160 @@ body::before {
 .nav-link svg { opacity: 0.7; flex-shrink: 0; }
 .nav-link.active svg { opacity: 1; }
 
-/* ─── SIDEBAR LOGOUT BUTTON ─── */
-.sidebar-logout {
+/* ─── SIDEBAR ACCOUNT WIDGET ─── */
+.sidebar-account {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+.account-trigger {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: auto 16px 0;
-  padding: 9px 12px;
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 400;
+  width: 100%;
+  padding: 8px 10px;
   background: transparent;
   border: 1px solid transparent;
+  border-radius: var(--radius);
   cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
   transition: all var(--transition);
-  width: calc(100% - 32px);
+  text-align: left;
 }
 
-.sidebar-logout:hover {
+.account-trigger:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+.account-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--gold-glow);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: var(--gold);
+  font-family: 'Playfair Display', serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.account-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.account-email {
+  font-size: 0.75rem;
+  color: var(--text);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.account-role {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.account-chevron {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  transition: transform var(--transition);
+}
+
+.account-trigger[aria-expanded="true"] .account-chevron {
+  transform: rotate(180deg);
+}
+
+/* Dropdown */
+.account-dropdown {
+  position: absolute;
+  bottom: calc(100% - 8px);
+  left: 16px;
+  right: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity var(--transition), transform var(--transition);
+  z-index: 200;
+}
+
+.account-dropdown.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.account-dropdown-email {
+  padding: 12px 14px 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 8px;
+}
+
+.account-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-align: left;
+  transition: background var(--transition), color var(--transition);
+}
+
+.account-dropdown-logout {
   color: #b06060;
-  background: var(--red-bg);
-  border-color: rgba(139, 58, 58, 0.2);
 }
 
-.sidebar-logout svg { opacity: 0.7; flex-shrink: 0; }
-.sidebar-logout:hover svg { opacity: 1; }
+.account-dropdown-logout:hover {
+  background: var(--red-bg);
+  color: #c07070;
+}
+
+/* Sidebar colapsada — esconde info, mantém avatar */
+@media (max-width: 900px) {
+  .account-info, .account-chevron { display: none; }
+  .account-trigger { justify-content: center; padding: 8px; }
+  .account-dropdown {
+    left: 64px;
+    right: auto;
+    bottom: 16px;
+    width: 200px;
+  }
+}
 
 /* ─── MAIN LAYOUT ─── */
 .main {
@@ -561,8 +688,6 @@ select option { background: var(--surface); }
   .sidebar-logo, .nav-label { display: none; }
   .nav-link span { display: none; }
   .nav-link { justify-content: center; padding: 10px; }
-  .sidebar-logout span { display: none; }
-  .sidebar-logout { justify-content: center; padding: 10px; margin: auto 8px 0; width: calc(100% - 16px); }
   .main { margin-left: 60px; }
   .page-header, .content { padding-left: 24px; padding-right: 24px; }
   .two-col { grid-template-columns: 1fr; }
@@ -718,4 +843,284 @@ select option { background: var(--surface); }
   .auth-card {
     padding: 32px 24px 28px;
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ROLE-BASED UI STYLES
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── ROLE BADGE (header do card) ─── */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.role-badge--admin {
+  background: var(--gold-glow);
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+}
+
+/* ─── ROLE PILL (na tabela de usuários) ─── */
+.role-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.role-pill--admin {
+  background: var(--gold-glow);
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+.role-pill--user {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* ─── DISPONIBILIDADE PILL ─── */
+.disp-pill {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 3px 10px;
+}
+
+/* ─── DROPDOWN ACCOUNT WIDGET ─── */
+.account-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 12px;
+}
+
+.account-dropdown-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gold-glow);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: var(--gold);
+  font-family: 'Playfair Display', serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.account-dropdown-badge {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 100px;
+}
+
+.badge-role--admin {
+  background: var(--gold-glow);
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+}
+
+.badge-role--user {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* ─── ACCESS DENIED ─── */
+.access-denied {
+  max-width: 400px;
+  margin: 80px auto;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.access-denied-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  color: var(--text-dim);
+}
+
+.access-denied h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.access-denied p {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* ─── USER LIVROS: grid de cards ─── */
+.user-livros-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.user-livros-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 380px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.user-search {
+  padding-left: 36px !important;
+}
+
+.livros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* Card de livro (view usuário) */
+.livro-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+  animation: fadeInRow 0.3s ease both;
+}
+
+.livro-card:hover {
+  border-color: var(--border-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.livro-card--indisponivel {
+  opacity: 0.6;
+}
+
+.livro-card--indisponivel:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Spine colorida no topo do card */
+.livro-card-spine {
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-dim));
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+
+.livro-card:hover .livro-card-spine { opacity: 1; }
+.livro-card--indisponivel .livro-card-spine { background: var(--border); }
+
+.livro-card-body {
+  padding: 18px 18px 12px;
+  flex: 1;
+}
+
+.livro-card-autor {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+.livro-card-titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.livro-card-footer {
+  padding: 12px 18px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.livro-btn-emprestar {
+  font-size: 0.68rem;
+  padding: 5px 10px;
+}
+
+.livro-indisponivel-hint {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Skeleton cards para o grid */
+.skeleton-card {
+  height: 160px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-lg);
+}
+
+/* ─── USER EMPRÉSTIMOS: layout focado ─── */
+.user-emp-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.user-emp-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .user-emp-layout { grid-template-columns: 1fr; }
+  .livros-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .user-livros-search-wrap { max-width: 100%; }
 }

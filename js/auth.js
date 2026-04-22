@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:8080";
+const API_URL = "https://biblioteca-api-nqwi.onrender.com";
+//const API_URL = "http://localhost:8080";
 
 // ── LOGIN ─────────────────────────────────────────
 export async function login(email, senha) {

@@ -516,6 +516,15 @@ input, select {
 
 input::placeholder { color: var(--text-dim); }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg) inset;
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  border-color: var(--gold-dim);
+}
+
 input:focus, select:focus {
   border-color: var(--gold-dim);
   box-shadow: 0 0 0 3px var(--gold-glow);

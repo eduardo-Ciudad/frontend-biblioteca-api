@@ -1,6 +1,6 @@
 import { getToken, logout } from "./auth.js";
 
-const API_URL = "https://biblioteca-api-nqwi.onrender.com";// http://localhost:8080
+const API_URL = "https://biblioteca-api-nqwi.onrender.com";
 
 // ── REQUEST BASE ──────────────────────────────────
 // Injeta o token JWT em todas as requisições autenticadas
